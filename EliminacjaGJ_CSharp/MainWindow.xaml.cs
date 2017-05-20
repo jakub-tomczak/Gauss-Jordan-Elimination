@@ -1,18 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using MathNet.Numerics.LinearAlgebra;
+using EliminacjaGJ_CSharp.Class;
+using FesetroundLibrary;
+using System.Numerics.MPFR;
 
 namespace EliminacjaGJ_CSharp
 {
@@ -29,20 +20,17 @@ namespace EliminacjaGJ_CSharp
         const int n = 100;
         Matrix<double> matrix = Matrix<double>.Build.Random(n, n);
         Vector<double> vectorB = Vector<double>.Build.Random(n);
+        
+        Interval<float> intervalA;
+        Interval<float> intervalB;
+
 
         private void DisplayMatrix(int dim)
         {
-            //for(int i=1;i<dim;i++)
-            //{
-            //    for(int j=1;j<dim;j++)
-            //    {
-            //        Console.Write(string.Format("{1}\t", matrix[i, j]));
-            //    }
-            //    Console.Write("\n");
-            //}
-
             Console.WriteLine(matrix.ToString(n, n));
         }
+
+
 
 
         public void Gauss()
@@ -63,6 +51,16 @@ namespace EliminacjaGJ_CSharp
 
 
         }
+
+        private void CheckInterval(object sender, RoutedEventArgs e)
+        {
+            Interval<double> a = new Interval<double>(-10,10);
+            Interval<double> b = new Interval<double>(2,8);
+            b = a * b;
+
+            Console.WriteLine(b);
+        }
+
 
         private void Gauss(object sender, RoutedEventArgs e)
         {

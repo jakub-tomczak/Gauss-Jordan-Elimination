@@ -6,15 +6,16 @@ using System.Threading.Tasks;
 
 namespace EliminacjaGJ_CSharp.Class
 {
-    class Matrix<T>
+    //to remove since MathNet.Numerics.LinearAlgebra is being used
+    class MyMatrix<T>
     {
         private T [,] matrix;
-        public Matrix(int rows, int columns)
+        public MyMatrix(int rows, int columns)
         {
             matrix = new T[rows, columns];
         }
 
-        public static Matrix<T> GenerateRandomMatrix(int rows, int columns)
+        public static MyMatrix<T> GenerateRandomMatrix(int rows, int columns)
         {
             throw new NotImplementedException();
         }

@@ -11,7 +11,7 @@ namespace EliminacjaGJ_CSharp.Class
         FLOAT = 60
     }
 
-    class Interval<T>
+    class Interval<T> : IFormattable, IEquatable<Interval<T>>, ICloneable where T: struct, IEquatable<T>, IFormattable
     {
         public Interval() { }
         public Interval(T a, T b)
@@ -67,8 +67,26 @@ namespace EliminacjaGJ_CSharp.Class
 
         public override string ToString()
         {
-            return String.Format($"[{this.a},{this.b}]");
+            return $"[{this.a},{this.b}]";
         }
+
+        public object Clone()
+        {
+            return MemberwiseClone();   //assuming a and b are value type
+        }
+
+        public bool Equals(Interval<T> other)
+        {
+            if ((dynamic)this.a == (dynamic)other.a && (dynamic)this.b == (dynamic)other.b)
+                return true;
+            return false;
+        }
+
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            return $"[{this.a},{this.b}]";
+        }
+
         public static Interval<T> operator +(Interval<T> a, Interval<T> b)
         {
             Interval<T> temp = new Interval<T>();
@@ -133,6 +151,48 @@ namespace EliminacjaGJ_CSharp.Class
                 r.b = x1y1;
             FesetRound.SET_FPU_TONEAREST();
 
+            return r;
+        }
+        public static Interval<T> operator /(Interval<T> x, Interval<T> y)
+        {
+            Interval<T> r = new Interval<T>((dynamic)0, (dynamic)0);
+            T x1y1, x1y2, x2y1, t;
+
+            if (((dynamic)y.a <= 0) && ((dynamic)y.b >= 0))
+            {
+                throw new DivideByZeroException("Division by an interval containing 0.");
+            }
+            else
+            {
+                FesetRound.SET_FPU_DOWNWARD();
+                x1y1 = (dynamic)x.a / y.a;
+                x1y2 = (dynamic)x.a / y.b;
+                x2y1 = (dynamic)x.b / y.a;
+                r.a = (dynamic)x.b / y.b;
+                t = r.a;
+                if ((dynamic)x2y1 < t)
+                    r.a = x2y1;
+                if ((dynamic)x1y2 < t)
+                    r.a = x1y2;
+                if ((dynamic)x1y1 < t)
+                    r.a = x1y1;
+
+                FesetRound.SET_FPU_UPWARD();
+                x1y1 = (dynamic)x.a / y.a;
+                x1y2 = (dynamic)x.a / y.b;
+                x2y1 = (dynamic)x.b / y.a;
+
+                r.b = (dynamic)x.b / y.b;
+                t = r.b;
+                if ((dynamic)x2y1 > t)
+                    r.b = x2y1;
+                if ((dynamic)x1y2 > t)
+                    r.b = x1y2;
+                if ((dynamic)x1y1 > t)
+                    r.b = x1y1;
+
+            }
+            FesetRound.SET_FPU_TONEAREST();
             return r;
         }
 

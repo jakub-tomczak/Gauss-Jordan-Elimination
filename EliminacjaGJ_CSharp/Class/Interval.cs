@@ -14,8 +14,19 @@ namespace EliminacjaGJ_CSharp.Class
     class Interval<T> : IFormattable, IEquatable<Interval<T>>, ICloneable where T: struct, IEquatable<T>, IFormattable
     {
         public Interval() { }
+        public Interval(T a)
+        {
+            this.a = a;
+            this.b = a;
+        }
         public Interval(T a, T b)
         {
+            if((dynamic)a>b)
+            {
+                T temp = a;
+                a = b;
+                b = temp;
+            }
             this.a = a;
             this.b = b;
         }
@@ -52,22 +63,33 @@ namespace EliminacjaGJ_CSharp.Class
 
         public static IAPrecision precision;
 
-        public static Interval<T> IntRead(string str)
+        public static Interval<T> NumberRead(string str)
         {
-            Interval<T> temp = new Interval<T>();
+            Interval<T> temp = new Interval<T>((dynamic)0);
             mpfr_struct rop = new mpfr_struct();
-            MPFRLibrary.mpfr_init2(rop, (ulong)precision);
-            MPFRLibrary.mpfr_set_str(rop, str, 10, (int)Rounding.TowardsMinusInfinity);
-            //implementation using mpfr needed
+            MPFRLibrary.mpfr_init2(rop, 60);
+            int convertResult = MPFRLibrary.mpfr_set_str(rop, str, 10, (int)Rounding.TowardsMinusInfinity);
+            if (convertResult < 0)
+                throw new FormatException($"Conversion error in {str}");
 
-
+            T le = (dynamic)0;
+            Type genericType = typeof(T);
+            if (genericType == typeof(System.Double))
+            {
+                temp.a = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsMinusInfinity);
+                temp.b = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsPlusInfinity);
+            }else if(genericType == typeof(System.Int32))
+            {
+                temp.a = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsMinusInfinity);
+                temp.b = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsPlusInfinity);
+            }
             return temp;
 
         }
 
         public override string ToString()
         {
-            return $"[{this.a},{this.b}]";
+            return $"[{this.a:e};{this.b:e}]";
         }
 
         public object Clone()
@@ -155,12 +177,12 @@ namespace EliminacjaGJ_CSharp.Class
         }
         public static Interval<T> operator /(Interval<T> x, Interval<T> y)
         {
-            Interval<T> r = new Interval<T>((dynamic)0, (dynamic)0);
-            T x1y1, x1y2, x2y1, t;
+            Interval<T> newInterval = new Interval<T>((dynamic)0, (dynamic)0);
+            T x1y1, x1y2, x2y1, temp;
 
             if (((dynamic)y.a <= 0) && ((dynamic)y.b >= 0))
             {
-                throw new DivideByZeroException("Division by an interval containing 0.");
+                throw new DivideByZeroException("Dzielenie przez interwał zawierający 0 w przedziale!");
             }
             else
             {
@@ -168,32 +190,32 @@ namespace EliminacjaGJ_CSharp.Class
                 x1y1 = (dynamic)x.a / y.a;
                 x1y2 = (dynamic)x.a / y.b;
                 x2y1 = (dynamic)x.b / y.a;
-                r.a = (dynamic)x.b / y.b;
-                t = r.a;
-                if ((dynamic)x2y1 < t)
-                    r.a = x2y1;
-                if ((dynamic)x1y2 < t)
-                    r.a = x1y2;
-                if ((dynamic)x1y1 < t)
-                    r.a = x1y1;
+                newInterval.a = (dynamic)x.b / y.b;
+                temp = newInterval.a;
+                if ((dynamic)x2y1 < temp)
+                    newInterval.a = x2y1;
+                if ((dynamic)x1y2 < temp)
+                    newInterval.a = x1y2;
+                if ((dynamic)x1y1 < temp)
+                    newInterval.a = x1y1;
 
                 FesetRound.SET_FPU_UPWARD();
                 x1y1 = (dynamic)x.a / y.a;
                 x1y2 = (dynamic)x.a / y.b;
                 x2y1 = (dynamic)x.b / y.a;
 
-                r.b = (dynamic)x.b / y.b;
-                t = r.b;
-                if ((dynamic)x2y1 > t)
-                    r.b = x2y1;
-                if ((dynamic)x1y2 > t)
-                    r.b = x1y2;
-                if ((dynamic)x1y1 > t)
-                    r.b = x1y1;
+                newInterval.b = (dynamic)x.b / y.b;
+                temp = newInterval.b;
+                if ((dynamic)x2y1 > temp)
+                    newInterval.b = x2y1;
+                if ((dynamic)x1y2 > temp)
+                    newInterval.b = x1y2;
+                if ((dynamic)x1y1 > temp)
+                    newInterval.b = x1y1;
 
             }
             FesetRound.SET_FPU_TONEAREST();
-            return r;
+            return newInterval;
         }
 
 

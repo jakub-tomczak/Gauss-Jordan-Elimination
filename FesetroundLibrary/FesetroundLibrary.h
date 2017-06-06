@@ -14,7 +14,6 @@ namespace FesetroundLibrary {
 		static void SET_FPU_DOWNWARD()
 		{
 			fesetround(FE_DOWNWARD);
-			printf("Set mode to downward\n");
 		}
 		static void SET_FPU_UPWARD()
 		{

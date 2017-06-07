@@ -182,6 +182,7 @@ namespace EliminacjaGJ_CSharp.Class
 
             if (((dynamic)y.a <= 0) && ((dynamic)y.b >= 0))
             {
+                Console.WriteLine("asdasd");
                 throw new DivideByZeroException("Dzielenie przez interwał zawierający 0 w przedziale!");
             }
             else

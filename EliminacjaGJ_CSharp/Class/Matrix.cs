@@ -29,6 +29,9 @@ namespace EliminacjaGJ_CSharp.Class
             this.columns = columns;
             matrix = new T[rows, columns];
 
+
+            random = new Random(DateTime.Now.Millisecond);
+
             bool intervalType = false;
             var genericType = GetGenericType(out intervalType);
             if (genericType != typeof(System.Int32)
@@ -93,14 +96,14 @@ namespace EliminacjaGJ_CSharp.Class
                     }
                     else if (matrixType == typeof(System.Double))
                     {
-                        if (row == 0)
-                        {
+                        //if (row == 0)
+                        //{
                             matrix[row, column] = (dynamic)new Interval<double>(randFloor + (randCelling - randFloor) * random.NextDouble()); //, randFloor + (randCelling - randFloor) * random.NextDouble()
-                        }
-                        else
-                        {
-                            matrix[row, column] = (dynamic)matrix[row - 1, column] * temp;
-                        }
+                        //}
+                        //else
+                        //{
+                        //    matrix[row, column] = (dynamic)matrix[row - 1, column] * temp;
+                        //}
                         //matrix.GetMatrix()[row, column] = (dynamic)0;// (double)randFloor + (randCelling - randFloor) * (dynamic)random.NextDouble();
                     }
                     else
@@ -132,36 +135,60 @@ namespace EliminacjaGJ_CSharp.Class
                     //vectorB[w] = vectorB[w] - m * vectorB[gw];
                 }
             }
+
+
+
+            for (int gw = rows-1; gw >= 0; gw--)
+            {
+                for (int w = gw - 1; w >= 0; w--)
+                {
+
+                    //Interval<double> m = matrixa[w, gw] / matrixa[gw, gw];
+                    T m = (dynamic)matrix[w, gw] / matrix[gw, gw];
+                    for (int k = gw; k >=0; k--)
+                    {
+                        matrix[w, k] = matrix[w, k] - (dynamic)m * matrix[gw, k];
+                    }
+                    //do the same operation on vector
+                    //vectorB[w] = vectorB[w] - m * vectorB[gw];
+                }
+            }
+
+            for(int row = 0; row < rows;row++)
+            {
+                for(int column = 0; column < columns;column++)
+                {
+                    matrix[row, column] = (dynamic) matrix[row, column] / matrix[row, row];
+                }
+            }
         }
 
         public void GenerateRandomMatrix(double floor, double celling)
         {
-
-
             for (int row = 0; row < rows; row++)
             {
                 T coefficient = GetGenericRandom(floor, celling);
                 for (int column = 0; column < columns; column++)
                 {
                     //random first row, the rest is the multiplication of the first one
-                    if (row == 0)
-                    {
+                    //if (row == 0)
+                    //{
                         matrix[row, column] = GetGenericRandom(floor, celling);
-                    }
-                    else
-                    {
-                        matrix[row, column] = (dynamic)matrix[row - 1, column] * coefficient;
-                    }
+                    //}
+                    //else
+                    //{
+                    //    matrix[row, column] = (dynamic)matrix[row - 1, column] * coefficient;
+                    //}
 
                 }
 
             }
 
         }
+        Random random;
 
         private T GetGenericRandom(double floor, double celling)
         {
-            Random random = new Random();
 
             //recognizing type to apply random
             var matrixType = matrix.GetType();

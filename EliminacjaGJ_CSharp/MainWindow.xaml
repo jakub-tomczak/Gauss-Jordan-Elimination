@@ -226,6 +226,8 @@
                        ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" 
                      IsReadOnly="True"
                    />
+            <Button x:Name="clearMessageLog" Grid.Column="1"  Content="X"  HorizontalAlignment="Right" Margin="0,10,30,0" Grid.Row="1" 
+                    VerticalAlignment="Top" Width="20" Height="20" Background="#FF333333" BorderBrush="White" Foreground="White" Click="clearMessageLog_Click"/>
             <!--HorizontalContentAlignment="Stretch" 
                    VerticalContentAlignment="Center"-->
         </Grid>

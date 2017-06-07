@@ -59,12 +59,20 @@ namespace EliminacjaGJ_CSharp
         private void Gauss(object sender, RoutedEventArgs e)
         {
 
+            if (matrixCells.Count < 0)
+            {
+                AlertUser("Brak macierzy użytkownika do przetworzenia!");
+            }
             if (parsingError)
             {
                 AlertUser("Błąd podczas przetwarzania macierzy!");
                 return;
             }
 
+            if(n < 0)
+            {
+                n = (int)Math.Sqrt(matrixCells.Count);
+            }
             MyMatrix<double> matrixA = new MyMatrix<double>(n);
             MyMatrix<Interval<double>> matrixB = new MyMatrix<Interval<double>>(n);
             List<string> numbersFromUserMatrix;
@@ -85,11 +93,13 @@ namespace EliminacjaGJ_CSharp
                     matrixA.LoadFromList(numbersFromUserMatrix);
                     matrixB.LoadFromList(numbersFromUserMatrix);
 
-                }catch(ArgumentException ex)
+                }
+                catch (ArgumentException ex)
                 {
                     AlertUser(ex.Message);
                     return;
-                }catch(FormatException ex)
+                }
+                catch (FormatException ex)
                 {
                     AlertUser(ex.Message);
                     return;
@@ -112,7 +122,8 @@ namespace EliminacjaGJ_CSharp
 
                 matrixB.GaussElimination();
                 AlertUser($"Udało się wygenerować macierz z INTERWAŁAMI! {matrixB}");
-            }catch(DivideByZeroException ex)
+            }
+            catch (DivideByZeroException ex)
             {
                 AlertUser(ex.Message);
             }
@@ -179,26 +190,13 @@ namespace EliminacjaGJ_CSharp
 
         bool intervalMode = false;
         bool parsingError = true;
+
         List<TextBox> matrixCells = new List<TextBox>();
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            if(userMatrixText.Text == string.Empty)
-            {
-                AlertUser("Brak tekstu!");
+            if (!ReadNumberFromField(userMatrixText, 1, 10))
                 return;
-            }
-            //userMatrixGrid
-            if (!Int32.TryParse(userMatrixText.Text, out n))
-            {
-                AlertUser("Błąd parsowania");
-                return;
-            }
-            if (n > 10 || n <= 0)
-            {
-                AlertUser("Podaj liczbę wymiarów z zakresu [1,10]");
-                return;
-            }
 
             parsingError = false;
             if (matrixCells.Count > 0)
@@ -237,6 +235,8 @@ namespace EliminacjaGJ_CSharp
 
                     //clear when clicked fro the first time
                     newTextBox.PreviewMouseLeftButtonDown += MouseClick;
+                    newTextBox.PreviewGotKeyboardFocus += NewTextBox_PreviewGotKeyboardFocus;
+
                     matrixCells.Add(newTextBox);
 
                     userMatrixGrid.Children.Add(newTextBox);
@@ -250,6 +250,35 @@ namespace EliminacjaGJ_CSharp
 
         }
 
+        private bool ReadNumberFromField(TextBox fieldWithNumberToParse, int bottomBorder, int upperBorder)
+        {
+            if (fieldWithNumberToParse.Text == string.Empty)
+            {
+                AlertUser("Brak tekstu!");
+                return false;
+            }
+            //userMatrixGrid
+            if (!Int32.TryParse(fieldWithNumberToParse.Text, out n))
+            {
+                AlertUser("Błąd parsowania");
+                return false;
+            }
+            if (n < bottomBorder || n > upperBorder)
+            {
+                AlertUser("Podaj liczbę wymiarów z zakresu [1,10] dla macierzy wpisywanej przez użytkownika, lub liczbę z przedziału [1,2000] dla macierzy generowanej losowo");
+                return false;
+            }
+            return true;
+        }
+
+        //tab clearing
+        private void NewTextBox_PreviewGotKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
+        {
+            ((TextBox)sender).PreviewGotKeyboardFocus -= NewTextBox_PreviewGotKeyboardFocus;
+            ((TextBox)sender).Text = "";
+        }
+
+        //left mouse click clearing
         private void MouseClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             ((TextBox)sender).PreviewMouseLeftButtonDown -= MouseClick;
@@ -258,7 +287,7 @@ namespace EliminacjaGJ_CSharp
 
         private void DestroyActiveTextBoxes()
         {
-            if(userMatrixGrid.Children.Count < 1)
+            if (userMatrixGrid.Children.Count < 1)
             {
                 AlertUser("Brak elementów macierzy do usunięcia");
                 return;
@@ -310,24 +339,81 @@ namespace EliminacjaGJ_CSharp
         {
             return this;
         }
-        
+
         bool debug = false;
         private void AlertUser(string message)
         {
-            if(debug)
+            if (debug)
             {
                 Console.WriteLine(message);
 
-            }else
+            }
+            else
             {
-                messageLog.Text = message;
+                if (messageLog.Text.Count() > 500)
+                    clearMessageLog_Click(null, null);
+                messageLog.Text += string.Format("{0}{1}", message, Environment.NewLine);
             }
         }
 
         private void generateRandomMatrix_Click(object sender, RoutedEventArgs e)
         {
-         //   MyMatrix<Interval<double>> matrixA = new MyMatrix<Interval<double>>();
+            DestroyActiveTextBoxes();
 
+            Random randomMatrixRank = new Random(DateTime.Now.Millisecond);
+
+            if (!ReadNumberFromField(randomMatrixText, 1, 2000))
+            {
+                n = randomMatrixRank.Next(10, 25);
+                AlertUser($"Błąd przy odczytywaniu rzędu macierzy, używam losowej liczby n = {n}");
+            }
+
+            try
+            {
+                if (intervalMode)
+                {
+                    MyMatrix<Interval<double>> matrixA = new MyMatrix<Interval<double>>(n);
+                    matrixA.GenerateRandomMatrix(1, 100);
+                    matrixA.GaussElimination();
+                    if (n < 10)
+                        AlertUser($"Udało się wykonać eliinację dla interwału! {matrixA}");
+                    else
+                        AlertUser("Udało się wykonać eliminację");
+                }
+                else
+                {
+                    MyMatrix<double> matrixA = new MyMatrix<double>(n);
+                    matrixA.GenerateRandomMatrix(1, 100);
+                    matrixA.GaussElimination();
+                    if (n < 10)
+                        AlertUser($"Udało się wykonać eliinację dla typu double! {matrixA}");
+                    else
+                        AlertUser("Udało się wykonać eliminację");
+                }
+            }
+            catch (FormatException ex)
+            {
+                AlertUser(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                AlertUser(ex.Message);
+            }
+            catch (DivideByZeroException ex)
+            {
+                AlertUser(ex.Message);
+            }
+            finally
+            {
+                n = -1;
+            }
+
+
+        }
+
+        private void clearMessageLog_Click(object sender, RoutedEventArgs e)
+        {
+            messageLog.Text = "";
         }
     }
 }

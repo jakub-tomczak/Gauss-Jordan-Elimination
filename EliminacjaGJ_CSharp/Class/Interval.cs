@@ -11,7 +11,7 @@ namespace EliminacjaGJ_CSharp.Class
         FLOAT = 60
     }
 
-    class Interval<T> : IFormattable, IEquatable<Interval<T>>, ICloneable where T: struct, IEquatable<T>, IFormattable
+    class Interval<T> : IFormattable, IEquatable<Interval<T>>, ICloneable where T : struct, IEquatable<T>, IFormattable
     {
         public Interval() { }
         public Interval(T a)
@@ -21,7 +21,7 @@ namespace EliminacjaGJ_CSharp.Class
         }
         public Interval(T a, T b)
         {
-            if((dynamic)a>b)
+            if ((dynamic)a > b)
             {
                 T temp = a;
                 a = b;
@@ -78,7 +78,8 @@ namespace EliminacjaGJ_CSharp.Class
             {
                 temp.a = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsMinusInfinity);
                 temp.b = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsPlusInfinity);
-            }else if(genericType == typeof(System.Int32))
+            }
+            else if (genericType == typeof(System.Int32))
             {
                 temp.a = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsMinusInfinity);
                 temp.b = (dynamic)MPFRLibrary.mpfr_get_d(rop, (int)Rounding.TowardsPlusInfinity);
@@ -175,6 +176,19 @@ namespace EliminacjaGJ_CSharp.Class
 
             return r;
         }
+        public static bool operator >(Interval<T> x, Interval<T> y)
+        {
+            if ((dynamic)x.a > y.a && (dynamic)x.b > y.b)
+                return true;
+            return false;
+        }
+        public static bool operator <(Interval<T> x, Interval<T> y)
+        {
+            if ((dynamic)x.a < y.a && (dynamic)x.b < y.b)
+                return true;
+            return false;
+        }
+
         public static Interval<T> operator /(Interval<T> x, Interval<T> y)
         {
             Interval<T> newInterval = new Interval<T>((dynamic)0, (dynamic)0);
@@ -182,7 +196,6 @@ namespace EliminacjaGJ_CSharp.Class
 
             if (((dynamic)y.a <= 0) && ((dynamic)y.b >= 0))
             {
-                Console.WriteLine("asdasd");
                 throw new DivideByZeroException("Dzielenie przez interwał zawierający 0 w przedziale!");
             }
             else
@@ -217,6 +230,29 @@ namespace EliminacjaGJ_CSharp.Class
             }
             FesetRound.SET_FPU_TONEAREST();
             return newInterval;
+        }
+
+        public double GetWidth()
+        {
+            return (dynamic)b - a;
+        }
+
+        public Interval<T> Abs()
+        {
+            Interval<T> absoluteValue = new Interval<T>();
+            T first = Math.Abs((dynamic)this.a);
+            T second = Math.Abs((dynamic)this.b);
+
+            if ((dynamic)first > second)
+            {
+                T temp = first;
+                first = second;
+                second = temp;
+            }
+
+            absoluteValue.a = first;
+            absoluteValue.b = second;
+            return absoluteValue;
         }
 
 

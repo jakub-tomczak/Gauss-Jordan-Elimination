@@ -20,40 +20,11 @@ namespace EliminacjaGJ_CSharp
         public MainWindow()
         {
             InitializeComponent();
-            //Application.Current.MainWindow
-            //matrixa = MyMatrix<Interval<double>>.GenerateRandomMatrix(3, 3, 1, 21);
-            //matrixa = new MyMatrix<Interval<double>>(n, n);
-            //matrixa[0, 0] = new Interval<double>(1f);
-            //matrixa[0, 1] = new Interval<double>(1f);
-            //matrixa[0, 2] = new Interval<double>(1f);
-            //matrixa[1, 0] = new Interval<double>(2f);
-            //matrixa[1, 1] = new Interval<double>(3f);
-            //matrixa[1, 2] = new Interval<double>(5f);
-            //matrixa[2, 0] = new Interval<double>(4f);
-            //matrixa[2, 1] = new Interval<double>(0);
-            //matrixa[2, 2] = new Interval<double>(5f);
-
 
         }
 
         int n = 3;
-
-        //Vector<Interval<double>> vectorC;
-        Interval<float> intervalA;
-        Interval<float> intervalB;
-
-
-
-
-
-        private void CheckInterval(object sender, RoutedEventArgs e)
-        {
-            Interval<double> a = new Interval<double>(-10, 10);
-            Interval<double> b = new Interval<double>(2, 8);
-            b = a / b;
-
-            AlertUser(b.ToString());
-        }
+        bool debug = false;
 
 
         private void Gauss(object sender, RoutedEventArgs e)
@@ -69,7 +40,7 @@ namespace EliminacjaGJ_CSharp
                 return;
             }
 
-            if(n < 0)
+            if (n < 0)
             {
                 n = (int)Math.Sqrt(matrixCells.Count);
             }
@@ -109,7 +80,19 @@ namespace EliminacjaGJ_CSharp
             }
             else
             {
-                AlertUser("interval mode unactive");
+                matrixA.LoadFromList(numbersFromUserMatrix);
+                double meanError = 0f;
+                double minError = 0f;
+                double maxError = 0f;
+
+                ClearErrorBox();
+                matrixA.GaussElimination();
+                matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+                double mean = meanError;
+                AddToErrorBoxBuffer($"Udało się wygenerować macierz \n {matrixA: e},\n średni błąd = {mean: e}");
+                AddToErrorBoxBuffer($"Błąd minimalny = {minError: e}");
+                AddToErrorBoxBuffer($"Błąd maksymalny = {maxError: e}");
+                WriteToErrorBox();
                 return;
 
             }
@@ -117,46 +100,43 @@ namespace EliminacjaGJ_CSharp
 
             try
             {
-                matrixA.GaussElimination();
-                AlertUser($"Udało się wygenerować macierz double! {matrixA}");
+                double meanError = 0f;
+                double minError = 0f;
+                double maxError = 0f;
 
+                ClearErrorBox();
+                matrixA.GaussElimination();
+                matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+                AddToErrorBoxBuffer($"Udało się wygenerować macierz \n {matrixA},\n średni błąd = {meanError:e}");
+                AlertUser($"błąd minimalny = { minError:e}");
+                AlertUser($"błąd maksymalny = { maxError:e}");
                 matrixB.GaussElimination();
-                AlertUser($"Udało się wygenerować macierz z INTERWAŁAMI! {matrixB}");
+
+                matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+                AddToErrorBoxBuffer($"Udało się wygenerować macierz z\n {matrixB},\n średni błąd = {meanError:e}");
+                AddToErrorBoxBuffer($"błąd minimalny = { minError:e}");
+                AddToErrorBoxBuffer($"błąd maksymalny = { maxError:e}");
+                WriteToErrorBox();
+
+
+                ClearUserMatrixOutput();
+                if (intervalMode)
+                {
+                    PrintUserMatrix(matrixA.PrintMatrix());
+
+                }
+
+                else
+                {
+                    PrintUserMatrix(matrixB.PrintMatrix());
+
+                }
+
             }
             catch (DivideByZeroException ex)
             {
                 AlertUser(ex.Message);
             }
-
-
-            //Console.Write($"{matrixIntervalDouble} {matrixIntervalInt} {matrixDouble} {matrixInt}");            
-
-            //Console.WriteLine("------------matrix interval double ----------");
-            //Console.WriteLine(matrixa);
-            //try
-            //{
-
-            //    matrixa.GaussElimination();
-            //}
-            //catch (DivideByZeroException ex)
-            //{
-            //    Console.WriteLine("matrix interval double - Macierz osobliwa!");
-            //}
-            //Console.WriteLine(matrixa);
-
-
-            //Console.WriteLine("------------matrix interval int----------");
-
-            //try
-            //{
-
-            //    matrixb.GaussElimination();
-            //}
-            //catch (DivideByZeroException ex)
-            //{
-            //    Console.WriteLine("matrix interval int - Macierz osobliwa!");
-            //}
-
         }
 
         private List<string> TryToLoadFromUserMatrix()
@@ -168,14 +148,6 @@ namespace EliminacjaGJ_CSharp
                                  select item.Text;
 
 
-            //foreach (TextBox item in matrixCells)
-            //{
-            //    var state = Double.TryParse(item.Text, out tempNumber);
-            //    if (!state)
-            //        throw new FormatException($"Błąd podczas wczytywania elementu - {item.Text}");
-
-            //    elements.Add(tempNumber);
-            //}
             return stringElements.ToList();
         }
 
@@ -243,10 +215,10 @@ namespace EliminacjaGJ_CSharp
                 }
             }
 
-            foreach (TextBox item in matrixCells)
-            {
-                AlertUser(item.Text);
-            }
+            //foreach (TextBox item in matrixCells)
+            //{
+            //    AlertUser(item.Text);
+            //}
 
         }
 
@@ -330,17 +302,149 @@ namespace EliminacjaGJ_CSharp
             intervalMode = false;
         }
 
-        private void userMatrixCalculateButton_Click(object sender, RoutedEventArgs e)
+        
+        private void generateRandomMatrix_Click(object sender, RoutedEventArgs e)
         {
-            AlertUser("mleko");
+            DestroyActiveTextBoxes();
+
+            bool success = false;
+            int iterations = 0;
+            do
+            {
+
+                ClearErrorBox();
+                //generator liczb, używany przy nierozpoznaniu wielkości macierzy podanej przez użytkownika
+                Random randomMatrixRank = new Random(DateTime.Now.Millisecond);
+
+                if (!ReadNumberFromField(randomMatrixText, 1, 2000))
+                {
+                    n = randomMatrixRank.Next(10, 25);
+                    AlertUser($"Błąd przy odczytywaniu rzędu macierzy, używam losowej liczby n = {n}");
+                }
+                try
+                {
+                    double meanError = 0f;
+                    double minError = 0f;
+                    double maxError = 0f;
+
+
+                    if (intervalMode)   //posługujemy się arytmetyki przedziałową
+                    {
+                        MyMatrix<Interval<double>> matrixA = new MyMatrix<Interval<double>>(n);
+                        matrixA.GenerateRandomMatrix(1, 1000);   //wygeneruj macierz o przedziale z zakresu od 1 do 100
+                        matrixA.GaussElimination();
+                        if (n < 10)
+                            AddToErrorBoxBuffer($"Udało się wykonać eliminację dla interwału! {matrixA}");
+                        else
+                            AddToErrorBoxBuffer("Udało się wykonać eliminację");
+
+                        matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+                        string temp = $"{meanError:e}";
+
+                        AddToErrorBoxBuffer($"średni błąd - { temp}");
+                        AddToErrorBoxBuffer($"błąd minimalny - { minError:e}");
+                        AddToErrorBoxBuffer($"błąd maksymalny - { maxError:e}");
+                        WriteToErrorBox();
+
+
+                        MyMatrix<double> matrixB = new MyMatrix<double>(n);
+                        //wygeneruj macierz o liczbach z zakresu od 1-100, dla typu generycznego double są losowane elementy macierzy typu double
+                        matrixA.GenerateRandomMatrix(1, 1000);
+                        matrixA.GaussElimination();
+                        if (n < 10)
+                            AddToErrorBoxBuffer($"Udało się wykonać eliinację dla typu double! {matrixA}");
+                        else
+                            AddToErrorBoxBuffer("Udało się wykonać eliminację");
+
+                        matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+
+                        string temp2 = $"{meanError:e}";
+                        AddToErrorBoxBuffer($"średni błąd = { temp2}");
+                        AddToErrorBoxBuffer($"błąd minimalny = { minError:e}");
+                        AddToErrorBoxBuffer($"błąd maksymalny = { maxError:e}");
+                        WriteToErrorBox();
+                    }
+                    else //nie posługujemy się arytmetyki przedziałową
+                    {
+                        MyMatrix<double> matrixA = new MyMatrix<double>(n);
+                        //wygeneruj macierz o liczbach z zakresu od 1-100, dla typu generycznego double są losowane elementy macierzy typu double
+                        matrixA.GenerateRandomMatrix(1, 1000);
+                        matrixA.GaussElimination();
+                        if (n < 10)
+                            AddToErrorBoxBuffer($"Udało się wykonać eliinację dla typu double! {matrixA}");
+                        else
+                            AddToErrorBoxBuffer("Udało się wykonać eliminację");
+
+                        matrixA.CalculateError(ref meanError, ref minError, ref maxError);
+
+                        string temp = $"{meanError:e}";
+                        AddToErrorBoxBuffer($"średni błąd = { temp}");
+                        AddToErrorBoxBuffer($"błąd minimalny = { minError:e}");
+                        AddToErrorBoxBuffer($"błąd maksymalny = { maxError:e}");
+                        WriteToErrorBox();
+                    }
+                    success = true;
+
+                }
+                catch (FormatException ex)
+                {
+                    AlertUser(ex.Message);  //zły typ danych
+                }
+                catch (ArgumentException ex)
+                {
+                    AlertUser(ex.Message); //zły argument  - np błąd parsowania liczby
+                }
+                catch (DivideByZeroException ex)
+                {
+                    AlertUser(ex.Message);  //błąd arytmetyki przedziałowej
+                }
+                finally
+                {
+                    iterations++;
+                    Console.WriteLine($"Iteration: {iterations}");
+                    n = -1;
+                }
+
+
+            } while (!success && iterations < 10);
+            if (success)
+                MessageBox.Show($"Dokonano eliminacji zupełnej w {iterations} iteracji.");
+            else
+                MessageBox.Show("Nie udało się wykonać eliminacji");
         }
 
-        public MainWindow GetInstance()
+        private void clearMessageLog_Click(object sender, RoutedEventArgs e)
         {
-            return this;
+            messageLog.Text = "";
+            ClearErrorBox();
         }
 
-        bool debug = false;
+        void ClearErrorBox()
+        {
+            errorTextBox.Text = string.Empty;
+            buffer = string.Empty;
+        }
+
+        void WriteToErrorBox()
+        { errorTextBox.Text = buffer; }
+
+        string buffer = string.Empty;
+        void AddToErrorBoxBuffer(string text)
+        {
+            buffer += Environment.NewLine;
+            buffer += text;
+        }
+
+        void PrintUserMatrix(string text)
+        {
+            userMatrixOutputTextBox.Text = text;
+        }
+        void ClearUserMatrixOutput()
+        {
+            userMatrixOutputTextBox.Text = string.Empty;
+        }
+
+
         private void AlertUser(string message)
         {
             if (debug)
@@ -354,66 +458,6 @@ namespace EliminacjaGJ_CSharp
                     clearMessageLog_Click(null, null);
                 messageLog.Text += string.Format("{0}{1}", message, Environment.NewLine);
             }
-        }
-
-        private void generateRandomMatrix_Click(object sender, RoutedEventArgs e)
-        {
-            DestroyActiveTextBoxes();
-
-            Random randomMatrixRank = new Random(DateTime.Now.Millisecond);
-
-            if (!ReadNumberFromField(randomMatrixText, 1, 2000))
-            {
-                n = randomMatrixRank.Next(10, 25);
-                AlertUser($"Błąd przy odczytywaniu rzędu macierzy, używam losowej liczby n = {n}");
-            }
-
-            try
-            {
-                if (intervalMode)
-                {
-                    MyMatrix<Interval<double>> matrixA = new MyMatrix<Interval<double>>(n);
-                    matrixA.GenerateRandomMatrix(1, 100);
-                    matrixA.GaussElimination();
-                    if (n < 10)
-                        AlertUser($"Udało się wykonać eliinację dla interwału! {matrixA}");
-                    else
-                        AlertUser("Udało się wykonać eliminację");
-                }
-                else
-                {
-                    MyMatrix<double> matrixA = new MyMatrix<double>(n);
-                    matrixA.GenerateRandomMatrix(1, 100);
-                    matrixA.GaussElimination();
-                    if (n < 10)
-                        AlertUser($"Udało się wykonać eliinację dla typu double! {matrixA}");
-                    else
-                        AlertUser("Udało się wykonać eliminację");
-                }
-            }
-            catch (FormatException ex)
-            {
-                AlertUser(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                AlertUser(ex.Message);
-            }
-            catch (DivideByZeroException ex)
-            {
-                AlertUser(ex.Message);
-            }
-            finally
-            {
-                n = -1;
-            }
-
-
-        }
-
-        private void clearMessageLog_Click(object sender, RoutedEventArgs e)
-        {
-            messageLog.Text = "";
         }
     }
 }

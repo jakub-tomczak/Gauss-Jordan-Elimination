@@ -4,7 +4,6 @@ using System.Globalization;
 
 namespace EliminacjaGJ_CSharp.Class
 {
-    //to remove since MathNet.Numerics.LinearAlgebra is being used
     /// <summary>
     /// 
     /// </summary>
@@ -16,6 +15,7 @@ namespace EliminacjaGJ_CSharp.Class
         private int rows;
         private int columns;
         private string matrixType = string.Empty;
+        private bool isIntervalType;
 
         public MyMatrix(int n)
             : this(n, n)
@@ -39,7 +39,7 @@ namespace EliminacjaGJ_CSharp.Class
             {
                 throw new FormatException($"Matrix class doesn't accept other data types than int, double or Interval<int> Interval<double>. Current type {genericType}");
             }
-
+            isIntervalType = intervalType;
             if (intervalType)
             {
                 matrixType = $"Interval<{genericType}>";
@@ -98,7 +98,7 @@ namespace EliminacjaGJ_CSharp.Class
                     {
                         //if (row == 0)
                         //{
-                            matrix[row, column] = (dynamic)new Interval<double>(randFloor + (randCelling - randFloor) * random.NextDouble()); //, randFloor + (randCelling - randFloor) * random.NextDouble()
+                        matrix[row, column] = (dynamic)new Interval<double>(randFloor + (randCelling - randFloor) * random.NextDouble()); //, randFloor + (randCelling - randFloor) * random.NextDouble()
                         //}
                         //else
                         //{
@@ -118,50 +118,179 @@ namespace EliminacjaGJ_CSharp.Class
             return matrix;
         }
 
+        public void CalculateError(ref double meanError, ref double minError, ref double maxError)
+        {
+            
+
+            double error = 0f;
+            if (isIntervalType)
+            {
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        Interval<double> temp = (dynamic)matrix[row, column];
+                        double tempWidth = temp.GetWidth();
+                        if (row==0 && column == 0)
+                        {
+                            minError = tempWidth;
+                            maxError = tempWidth;
+                        }
+                        else
+                        {
+                            if (minError > tempWidth)
+                            {
+                                minError = tempWidth;
+                            }
+                            if (maxError < tempWidth)
+                            {
+                                maxError = tempWidth;
+                            }
+                        }
+                        error += tempWidth;
+                    }
+                }
+            }
+            else
+            {
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        double temp = (dynamic)matrix[row, column];
+
+                        if (row == 0 && column ==0)
+                        {
+                            minError = Math.Abs(1f - temp);
+                            maxError = minError;
+                        }
+                        else
+                        {
+                            if(minError > temp)
+                            {
+                                minError = temp;
+                            }
+                            if(maxError < temp)
+                            {
+                                maxError = temp;
+                            }
+                        }
+                        if (row == column)
+                        {
+                            error += Math.Abs(1f - temp);
+                        }
+                        else
+                        {
+                            error += Math.Abs(0f - temp);
+                        }
+                    }
+                }
+            }
+
+            error /= (rows * columns);
+            meanError = error;
+        }
+
+        private void TryToPerformPartialPivoting(int startingRow)
+        {
+            if (startingRow + 1 == rows)
+                return;
+
+            int maxIndex = -1;
+
+            if (isIntervalType)
+            {
+                Interval<double> maxValue = new Interval<double>(0f);
+                for (int row = startingRow + 1; row < rows; row++)
+                {
+                    Interval<double> temp = ((dynamic) matrix[row, startingRow]);
+                    if(maxValue < temp.Abs())
+                    {
+                        maxValue = temp;
+                        maxIndex = row;
+                    }
+                }
+            }
+            else
+            {
+                double maxValue = 0f;
+                for(int row = startingRow + 1; row < rows; row++)
+                {
+                    double temp = (dynamic)matrix[row, startingRow];
+                    if (maxValue < Math.Abs(temp))
+                    {
+                        maxValue = temp;
+                        maxIndex = row;
+                    }
+                }
+            }
+
+
+            if (maxIndex == -1)
+                return;
+            PartialPivoting(startingRow, maxIndex);
+        }
+
+        private void PartialPivoting(int rowA, int rowB)
+        {
+            for (int column = 0; column < columns; column++)
+            {
+                Swap(ref matrix[rowA, column],ref matrix[rowB, column]);
+            }
+        }
+        private void Swap(ref T a,ref T b)
+        {
+            T temp = a;
+            a = b;
+            b = temp;
+        }
+
         public void GaussElimination()
         {
+            //eliminacja Gaussa
             for (int gw = 0; gw < rows; gw++)
             {
+                //wybranie wiersza do ewentualnej zamiany
+                //poprzez znalezienie pivota o najwiekszej wartosci bezwzglednej
+                TryToPerformPartialPivoting(gw);
                 for (int w = gw + 1; w < columns; w++)
                 {
-
-                    //Interval<double> m = matrixa[w, gw] / matrixa[gw, gw];
                     T m = (dynamic)matrix[w, gw] / matrix[gw, gw];
                     for (int k = gw; k < columns; k++)
                     {
                         matrix[w, k] = matrix[w, k] - (dynamic)m * matrix[gw, k];
                     }
-                    //do the same operation on vector
-                    //vectorB[w] = vectorB[w] - m * vectorB[gw];
                 }
             }
 
 
+            //uzyskaj 1 na przekątnej poprzez podzielenie każdego elementu w danym wierszu przez wartość
+            //elementu na przekątnej tego wiersza
+            // i-ty wiersz / matrix[i,i]
+            for (int row = 0; row < rows; row++)
+            {
+                for (int column = 0; column < columns; column++)
+                {
+                    matrix[row, column] = (dynamic)matrix[row, column] / matrix[row, row];
+                }
+            }
 
-            for (int gw = rows-1; gw >= 0; gw--)
+            //zerowanie gornej macierzy
+            for (int gw = rows - 1; gw >= 0; gw--)
             {
                 for (int w = gw - 1; w >= 0; w--)
                 {
-
-                    //Interval<double> m = matrixa[w, gw] / matrixa[gw, gw];
                     T m = (dynamic)matrix[w, gw] / matrix[gw, gw];
-                    for (int k = gw; k >=0; k--)
+                    for (int k = gw; k >= 0; k--)
                     {
                         matrix[w, k] = matrix[w, k] - (dynamic)m * matrix[gw, k];
                     }
-                    //do the same operation on vector
-                    //vectorB[w] = vectorB[w] - m * vectorB[gw];
                 }
             }
 
-            for(int row = 0; row < rows;row++)
-            {
-                for(int column = 0; column < columns;column++)
-                {
-                    matrix[row, column] = (dynamic) matrix[row, column] / matrix[row, row];
-                }
-            }
         }
+
+
 
         public void GenerateRandomMatrix(double floor, double celling)
         {
@@ -170,15 +299,7 @@ namespace EliminacjaGJ_CSharp.Class
                 T coefficient = GetGenericRandom(floor, celling);
                 for (int column = 0; column < columns; column++)
                 {
-                    //random first row, the rest is the multiplication of the first one
-                    //if (row == 0)
-                    //{
-                        matrix[row, column] = GetGenericRandom(floor, celling);
-                    //}
-                    //else
-                    //{
-                    //    matrix[row, column] = (dynamic)matrix[row - 1, column] * coefficient;
-                    //}
+                    matrix[row, column] = GetGenericRandom(floor, celling);
 
                 }
 
@@ -276,7 +397,7 @@ namespace EliminacjaGJ_CSharp.Class
         public override string ToString()
         {
             String returnValue = string.Empty;
-            returnValue += $"Matrix {matrixType}, {this.rows}x{this.columns}\n";
+            returnValue += $"Macierz {matrixType}, {this.rows}x{this.columns}\n";
             for (int row = 0; row < this.rows; row++)
             {
                 for (int column = 0; column < this.columns; column++)
@@ -288,50 +409,29 @@ namespace EliminacjaGJ_CSharp.Class
             return returnValue;
         }
 
-        //public void GaussJordan()
-        //{
-        //    for (int row = 0; row < n; row++)
-        //    {
-        //        for (int column = 0; column < n; column++)
-        //        {
-        //            //1.check if pivot cell has a value diffrent from 0
-        //            if (matrix[row, column] == 0)
-        //            {
-        //                if (!TryToSwapRows(row))
-        //                {
-        //                    continue;   //increase column by 1 if all entries in the column are 0
-        //                }
-        //            }
+        public string PrintMatrix()
+        {
+            string returnValue = string.Empty;
+            for (int row = 0; row < this.rows; row++)
+            {
+                for (int column = 0; column < this.columns; column++)
+                {
+                    returnValue += $"{matrix[row, column].ToString()}\t";
+                }
+                returnValue += "\n";
+            }
+            return returnValue;
+        }
 
-        //            //2divide row-th row by a[row column]
-        //            for (int j = 0; j < n; j++)
-        //            {
-        //                matrix[row, j] /= matrix[row, 0];
-        //            }
+        public string ShortDescription()
+        {
+            String returnValue = string.Empty;
+            returnValue += $"Macierz {matrixType}, {this.rows}x{this.columns}\n";
 
 
-
-        //        }
-        //    }
-        //}
-
-        //private bool TryToSwapRows(int row)
-        //{
-        //    for (int i = 0; i < n; i++)
-        //    {
-        //        if (matrix[i, i] != 0)
-        //        {
-        //            for (int j = 0; j < n; j++)
-        //            {
-        //                double temp = matrix[row, j];
-        //                matrix[row, j] = matrix[i, j];
-        //                matrix[i, j] = temp;
-        //            }
-        //            return true;
-        //        }
-        //    }
-        //    return false;
-        //}
+            return returnValue;
+        }
+     
 
         public T this[int row, int column]
         {

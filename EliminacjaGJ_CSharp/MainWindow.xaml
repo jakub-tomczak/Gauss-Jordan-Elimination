@@ -178,23 +178,23 @@
                 <Grid Grid.Row="0">
                     <DockPanel HorizontalAlignment="Stretch" Margin="2,2,2,2"  LastChildFill="False" VerticalAlignment="Stretch" Background="#FF333333">
                         <Label x:Name="userMatrixLabel" Content="Liczba wymiarów:"  Width="110" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="White" Foreground="White"  />
-                        
+
                         <TextBox x:Name="userMatrixText" HorizontalAlignment="Left"  TextWrapping="Wrap" Text="" BorderBrush="White" VerticalContentAlignment="Center"  VerticalAlignment="Stretch"
                                  Width="40" MaxLength="2" MaxLines="1" Margin="10,0,10,0" ToolTip="Liczba całkowita [1,10]." Height="26" TextAlignment="Center" FontSize="16" Background="#FF333331" BorderThickness="2" Foreground="White" />
-                        
+
                         <Button x:Name="button" Content="Wstaw"  VerticalAlignment="Stretch" Click="button_Click" Height="26" Width="75"  BorderThickness="2" Cursor="Arrow" Background="#FF333333" 
                                 Foreground="White" BorderBrush="White" Margin="10,0,10,0"  Style="{DynamicResource ButtonStyleBasic}"/>
                         <GridSplitter x:Name="gridSplitter"  VerticalAlignment="Stretch" Width="1" Opacity="0.8" Margin="0,30,0,30" />
 
-                        
+
                         <Button x:Name="generateRandomMatrix" Content="Losuj macierz"  VerticalAlignment="Stretch" Click="generateRandomMatrix_Click"  Height="26" Width="95" BorderThickness="2" 
                                 Cursor="Arrow" Background="#FF333333" Foreground="White" BorderBrush="White" Margin="10,0,10,0" Style="{DynamicResource ButtonStyleBasic}"/>
                         <Label x:Name="randomMatrixLabel" Content="n:"  Width="20" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center" HorizontalContentAlignment="Right" BorderBrush="White" Foreground="White" Margin="0"  />
                         <TextBox x:Name="randomMatrixText" HorizontalAlignment="Left"  TextWrapping="Wrap" Text="" BorderBrush="White" VerticalContentAlignment="Center"  VerticalAlignment="Stretch" Width="50" MaxLength="4" MaxLines="1" Margin="0,0,10,0" ToolTip="Liczba całkowita [1,2000]." Height="26" TextAlignment="Center" FontSize="16" Background="#FF333331" BorderThickness="2" Foreground="White"/>
 
-                        
+
                         <GridSplitter x:Name="gridSplitter2"  VerticalAlignment="Stretch" Width="1" Opacity="0.8" Margin="0,30,0,30" />
-                        <CheckBox x:Name="checkBox" Content="Interval mode" Height="26" VerticalAlignment="Center" Margin="15,0,15,0" VerticalContentAlignment="Center" Background="#FF333333" Foreground="White" BorderBrush="White" Checked="checkBox_Checked" Unchecked="checkBox_Unchecked" Style="{DynamicResource CheckBoxMyStyle}"/>
+                        <CheckBox x:Name="checkBox" Content="Arytmetyka interwałowa" Height="26" VerticalAlignment="Center" Margin="15,42,15,41" VerticalContentAlignment="Center" Background="#FF333333" Foreground="White" BorderBrush="White" Checked="checkBox_Checked" FontSize="11" Unchecked="checkBox_Unchecked" Style="{DynamicResource CheckBoxMyStyle}" Width="145"/>
                     </DockPanel>
                 </Grid>
 
@@ -221,13 +221,22 @@
 
 
             <!-- log space -->
-            <TextBox Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" x:Name="messageLog" Background="Tomato" Text="message label" HorizontalAlignment="Stretch" 
+            <TextBox Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" x:Name="messageLog" Background="Tomato" Text="" HorizontalAlignment="Stretch" 
                    Margin="10,10,10,10" VerticalAlignment="Stretch" MinHeight="50" Foreground="White" FontSize="14"
                        ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" 
                      IsReadOnly="True"
                    />
             <Button x:Name="clearMessageLog" Grid.Column="1"  Content="X"  HorizontalAlignment="Right" Margin="0,10,30,0" Grid.Row="1" 
                     VerticalAlignment="Top" Width="20" Height="20" Background="#FF333333" BorderBrush="White" Foreground="White" Click="clearMessageLog_Click"/>
+
+            <!--error window-->
+            <Rectangle Grid.Row="0" Fill="#FF333333"  Stroke="Black" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Grid.Column="1" Margin="2"/>
+            <TextBox x:Name="errorTextBox" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" Height="190" TextWrapping="Wrap" Text="" FontSize="13"
+                     IsReadOnly="True"  Panel.ZIndex="1" MaxHeight="200"
+                     Background="Transparent" Foreground="White" VerticalAlignment="Top" Margin="10" Width="395"/>
+            <TextBox x:Name="userMatrixOutputTextBox" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" Height="284" TextWrapping="Wrap" Text="" FontSize="13"
+                     IsReadOnly="True" MaxHeight="500"
+                     Background="Transparent" Foreground="White" VerticalAlignment="Center" Margin="67,320,66,15" Width="500" Panel.ZIndex="2"/>
             <!--HorizontalContentAlignment="Stretch" 
                    VerticalContentAlignment="Center"-->
         </Grid>
